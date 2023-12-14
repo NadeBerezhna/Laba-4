@@ -1,35 +1,32 @@
-
 import json
-
-def read_data(file_name):
-  data_dict = {}
-  with open(file_name) as f:
-    f.readline()
-    for line in f:
-      user_data = None
-      try:
-        user_data = json.loads(line)
-      except:
-        pass
-      if user_data != None:
-        data_dict[user_data['user_id']] = user_data['category']
-  return data_dict
-
-def print_enumerated_record(data_list):
-  for data in data_list:
-    (idx, (user_id, category)) = data
-    idx_str = '{: >3d}'.format(idx+1)
-    print(f'{idx_str} - {user_id} => {category} ')
+import xml.etree.ElementTree as ET
+data = []
 
 
-def main():
-  data_dict = read_data('./purchase_log.txt')
+with open("/content/test.json", "r") as f:
+  data = json.load(f)
+  print(data)
 
-  print('Первые 100 строк данных:')
-  print('------------------------')
+def get_xml_element_from_dict(data: dict, parent: ET.Element) -> ET.SubElement:
+    for key, value in data.items():
+        element = ET.SubElement(parent, key)
+        if isinstance(value, dict):
+            get_xml_element_from_dict(value, element)
+        else:
+            element.text = value
 
-  en = enumerate(data_dict.items())
-  print_enumerated_record([next(en) for _ in range(100)])
+
+def get_xml_from_dict(data: dict) -> ET.ElementTree:
+    root = ET.Element('Файл')
+    get_xml_element_from_dict(data, root)
+    tree = ET.ElementTree(root)
+    return tree
 
 
-main()
+def write_tree_to_file(tree: ET.ElementTree) -> None:
+    with open('for_tests.xml', mode='wb') as file:
+        tree.write(file, encoding='utf-8', xml_declaration=True)
+
+
+result = get_xml_from_dict(data)
+write_tree_to_file(result)
